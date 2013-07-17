@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
     ansible.playbook = "playbooks/vagrant.yml"
 
     ansible.inventory_file = "playbooks/vagrant/inventory.ini"
-    ansible.extra_vars = { secure_dir: "secure_example" }
+    ansible.extra_vars = { secure_dir: "playbooks/secure_example" }
     ansible.verbose = true
   end
 end
