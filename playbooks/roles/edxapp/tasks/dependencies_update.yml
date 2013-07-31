@@ -1,0 +1,90 @@
+---
+# Ruby plays that need to be run after platform updates.
+- name: gem | gem install bundler
+  shell: RBENV_ROOT={{ rbenv_root }} GEM_HOME={{ gem_home }} {{ rbenv_root }}/shims/gem install bundle chdir={{ edx_platform_code_dir }}
+  tags:
+  - ruby
+  - deploy
+  - install
+
+- name: bundle | bundle install
+  shell: RBENV_ROOT={{ rbenv_root }} GEM_HOME={{ gem_home }} {{ gem_home }}/bin/bundle install --binstubs chdir={{ edx_platform_code_dir }}
+  tags:
+  - ruby
+  - deploy
+  - install
+
+# Node play that need to be run after platform updates.
+- name: Install edx-platform npm dependencies
+  shell: npm install chdir={{ edx_platform_code_dir }}
+  tags:
+  - npm
+  - update
+  - deploy
+
+# Python plays that need to be run after platform updates.
+
+# Install the python pre requirements into {{ venv_dir }}
+- name : install python pre-requirements
+  pip: requirements="{{pre_requirements_file}}" virtualenv="{{venv_dir}}" state=present
+  tags:
+  - lms
+  - cms
+  - install
+  - deploy
+
+# Install the python modules into {{ venv_dir }}
+- name : install python base-requirements
+  # Need to use shell rather than pip so that we can maintain the context of our current working directory; some
+  # requirements are pathed relative to the edx-platform repo. Using the pip from inside the virtual environment implicitly
+  # installs everything into that virtual environment.
+  shell: cd {{ edx_platform_code_dir }} && {{ venv_dir }}/bin/pip install --use-mirrors -r {{ base_requirements_file }}
+  tags:
+  - lms
+  - cms
+  - install
+  - deploy
+
+# Install the python post requirements into {{ venv_dir }}
+- name : install python post-requirements
+  pip: requirements="{{post_requirements_file}}" virtualenv="{{venv_dir}}" state=present
+  tags:
+  - lms
+  - cms
+  - install
+  - deploy
+
+# Install the final python modules into {{ venv_dir }}
+- name : install python post-post requirements
+  # Need to use shell rather than pip so that we can maintain the context of our current working directory; some
+  # requirements are pathed relative to the edx-platform repo. Using the pip from inside the virtual environment implicitly
+  # installs everything into that virtual environment.
+  shell: cd {{ edx_platform_code_dir }} && {{ venv_dir }}/bin/pip install --use-mirrors -r {{ item }}
+  with_items:
+  - "{{ repo_requirements_file }}"
+  - "{{ github_requirements_file }}"
+  - "{{ local_requirements_file }}"
+  tags:
+  - lms
+  - cms
+  - install
+  - deploy
+
+
+# Install the sandbox python modules into {{ venv_dir }}
+- name : install sandbox requirements into regular venv
+  # Need to use shell rather than pip so that we can maintain the context of our current working directory; some
+  # requirements are pathed relative to the edx-platform repo. Using the pip from inside the virtual environment implicitly
+  # installs everything into that virtual environment.
+  shell: cd {{ edx_platform_code_dir }} && {{ venv_dir }}/bin/pip install --use-mirrors -r {{ item }}
+  with_items:
+  - "{{ sandbox_base_requirements }}"
+  - "{{ sandbox_local_requirements }}"
+  - "{{ sandbox_post_requirements }}"
+  when: install_sandbox_reqs_into_regular_venv
+  tags:
+  - lms
+  - cms
+  - install
+  - deploy
+
