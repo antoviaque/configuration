@@ -3,7 +3,9 @@
   apt: pkg={{','.join(lms_debian_pkgs)}} state=present
 
 #- include: lms.yml
+#  when: "'lms' in service_variants_enabled"
 #- include: cms.yml
+#  when: "'cms' in service_variants_enabled"
 
 #- name: creating edxapp upstart script
 #  template: src=edxapp.conf.j2 dest=/etc/init/edxapp.conf owner=root group=root
@@ -11,9 +13,14 @@
 - include: npm.yml
 - include: ruby.yml
 
+- name: vagrant | check if edx-platform repository directory is mounted
+  command: grep {{edx_platform_code_dir}} /proc/mounts
+  register: platform_mount
+  ignore_errors: yes
+
 - name: git checkout edx-platform repo into $app_base_dir
   git: dest={{edx_platform_code_dir}} repo={{lms_source_repo}} version={{lms_version}}
-  when: "'/vagrant' not in [ m['mount'] for m in ansible_mounts ]"
+  when_failed: $platform_mount
 
 - include: dependencies_update.yml
 
