@@ -88,3 +88,11 @@
   - install
   - deploy
 
+- name : pip | Make sure all installed python modules are available to all users (incl. www-data)
+  shell: chmod o+r {{ edx_platform_code_dir }} -R
+  tags:
+  - lms
+  - cms
+  - install
+  - deploy
+
