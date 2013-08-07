@@ -13,6 +13,9 @@
 - include: npm.yml
 - include: ruby.yml
 
+#- name: stop edxapp services
+#  service: name=edxapp state=stopped
+
 - name: vagrant | check if edx-platform repository directory is mounted
   command: grep {{edx_platform_code_dir}} /proc/mounts
   register: platform_mount
@@ -22,6 +25,14 @@
   git: dest={{edx_platform_code_dir}} repo={{lms_source_repo}} version={{lms_version}}
   when_failed: $platform_mount
 
+- name: sets permissions on platform code dir and contents
+  file: path={{edx_platform_code_dir}} state=directory owner=www-data group=www-data recurse=yes
+  when_failed: $platform_mount
+
 - include: dependencies_update.yml
 
+- name: syncdb and migrate
+  shell: sudo -u www-data SERVICE_VARIANT=lms /opt/edx/bin/django-admin.py syncdb --migrate --noinput --settings=cms.envs.dev --pythonpath=/opt/wwc/edx-platform
 
+#- name: restart edxapp
+#  service: name=edxapp state=restarted
