@@ -18,6 +18,8 @@
   hosts: localhost
   sudo: True
   gather_facts: True
+  vars_files:
+    - "{{ secure_dir }}/vars/edxapp_vars.yml"
   vars:
     migrate_db: "yes"
     openid_workaround: True
